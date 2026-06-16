@@ -53,6 +53,10 @@ def main():
                 return
         screen.blit(bg_img, [0, 0]) 
 
+        if kk_rct.colliderect(bb_rct):  # こうかとんRectと爆弾Rectが重なったら
+            print("ゲームオーバー")
+            return
+
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         #if key_lst[pg.K_UP]:
