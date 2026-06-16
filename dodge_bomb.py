@@ -2,6 +2,7 @@ import os
 import random
 import sys
 import time
+import math
 import pygame as pg
 
 
@@ -32,7 +33,7 @@ def gameover(screen: pg.Surface) -> None:
     go_img = pg.Surface((WIDTH, HEIGHT))
     go_img.fill((0, 0, 0))
     # 2. 1のSurfaceの透明度を設定
-    go_img.set_alpha(150)
+    go_img.set_alpha(200)
     # 3. 白文字でGame Overと書かれたフォントSurfaceを作り，1のSurfaceにblit
     ob_f = pg.font.Font(None, 80)
     text_surf = ob_f.render("Game Over", True, (255, 255, 255))
@@ -72,6 +73,31 @@ def muki_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
     }
     return kk_imgs
 
+def calc_orientation(org: pg.Rect, dst: pg.Rect, current_xy: tuple[float, float]) -> tuple[float, float]:
+    """
+    爆弾からこうかとんへの方向ベクトルを計算する。
+    距離が300未満の場合は慣性としてこれまでの移動方向を維持する。
+    """
+    # 1. 座標ベクトル間の差ベクトル
+    diff_x = dst.centerx - org.centerx
+    diff_y = dst.centery - org.centery
+    
+    # 2. 差ベクトルのふたつの距離を計算する
+    norm = math.sqrt(diff_x**2 + diff_y**2)
+    
+    # 3. 距離が300未満だったら計算前の慣性を返す
+    if norm < 300:
+        return current_xy
+    
+    # 4. 差ベクトルのノルムが √50 になるように正規化する
+    if norm != 0:
+        vx = diff_x / norm * math.sqrt(50)
+        vy = diff_y / norm * math.sqrt(50)
+    else:
+        vx, vy = current_xy  
+        
+    return vx, vy
+
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
@@ -91,7 +117,7 @@ def main():
     bb_rct = bb_img.get_rect()  # 爆弾Rect
     bb_rct.centerx = random.randint(0, WIDTH)  # 横初期座標
     bb_rct.centery = random.randint(0, HEIGHT)  # 縦初期座標
-    vx, vy = +5, +5 
+    vx, vy = +5, +5  # 初期速度
 
     clock = pg.time.Clock()
     tmr = 0
@@ -120,6 +146,8 @@ def main():
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])  # 動きをなかったことにする
         screen.blit(kk_img, kk_rct)
+
+        vx, vy = calc_orientation(bb_rct, kk_rct, (vx, vy))
 
         bb_rct.move_ip(vx, vy)
         yoko, tate = check_bound(bb_rct)
