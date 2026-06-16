@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import time
 import pygame as pg
 
 
@@ -25,6 +26,32 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     if rct.top < 0 or HEIGHT < rct.bottom:  # 縦方向判定
         tate = False
     return yoko, tate
+
+def gameover(screen: pg.Surface) -> None:
+    # 1.黒い矩形を描画するための空のSurface
+    go_img = pg.Surface((WIDTH, HEIGHT))
+    go_img.fill((0, 0, 0))
+    # 2. 1のSurfaceの透明度を設定
+    go_img.set_alpha(150)
+    # 3. 白文字でGame Overと書かれたフォントSurfaceを作り，1のSurfaceにblit
+    ob_f = pg.font.Font(None, 80)
+    text_surf = ob_f.render("Game Over", True, (255, 255, 255))
+    text_rct = text_surf.get_rect()
+    text_rct.center = (WIDTH // 2, HEIGHT // 2)
+    go_img.blit(text_surf, text_rct)
+    # 4. こうかとん画像をロードし，こうかとんSurfaceを作り，1のSurfaceにblit
+    kk_img2 = pg.image.load("fig/8.png") # 泣いているこうかとん（1.pngなど）に変えてもOKです
+    kk_rct_l = kk_img2.get_rect()
+    kk_rct_r = kk_img2.get_rect()
+    kk_rct_l.center = (text_rct.left - 100, HEIGHT // 2)
+    kk_rct_r.center = (text_rct.right + 100, HEIGHT // 2)
+    go_img.blit(kk_img2, kk_rct_l)
+    go_img.blit(kk_img2, kk_rct_r)
+    # 5. 1のSurfaceをscreen Surfaceにblit
+    screen.blit(go_img, (0, 0))
+    # 6. pg.display.update()したら，time.sleep(5)する
+    pg.display.update()
+    time.sleep(5)
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
@@ -54,7 +81,7 @@ def main():
         screen.blit(bg_img, [0, 0]) 
 
         if kk_rct.colliderect(bb_rct):  # こうかとんRectと爆弾Rectが重なったら
-            print("ゲームオーバー")
+            gameover(screen)
             return
 
         key_lst = pg.key.get_pressed()
