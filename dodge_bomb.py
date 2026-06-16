@@ -53,12 +53,33 @@ def gameover(screen: pg.Surface) -> None:
     pg.display.update()
     time.sleep(5)
 
+def muki_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
+    # ベース画像
+    base_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
+# 左右反転したベース画像
+    flip_img = pg.transform.flip(base_img, True, False)
+    # 移動量タプル : rotozoomしたSurface の辞書を作成
+    kk_imgs = {
+        (0, 0):   base_img,                                   #静止時
+        (-5, 0):  base_img,                                   # 左
+        (-5, -5): pg.transform.rotozoom(base_img, -45, 1.0),  # 左上
+        (0, -5):  pg.transform.rotozoom(flip_img, 90, 1.0),   # 上
+        (+5, -5): pg.transform.rotozoom(flip_img, 45, 1.0),   # 右上
+        (+5, 0):  flip_img,                                   # 右
+        (+5, +5): pg.transform.rotozoom(flip_img, -45, 1.0),  # 右下
+        (0, +5):  pg.transform.rotozoom(flip_img, -90, 1.0),  # 下
+        (-5, +5): pg.transform.rotozoom(base_img, 45, 1.0),   # 左下
+    }
+    return kk_imgs
+
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")    
     # こうかとんの初期化
-    kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
+    kk_imgs = muki_kk_imgs()
+    kk_img = kk_imgs[(0, 0)]
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
 
@@ -86,18 +107,15 @@ def main():
 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
-        #if key_lst[pg.K_UP]:
-        #    sum_mv[1] -= 5
-        #if key_lst[pg.K_DOWN]:
-        #    sum_mv[1] += 5
-        #if key_lst[pg.K_LEFT]:
-        #    sum_mv[0] -= 5
-        #if key_lst[pg.K_RIGHT]:
-        #    sum_mv[0] += 5
         for key, mv in DELTA.items():
             if key_lst[key]:
                 sum_mv[0] += mv[0]  # 横方向の処理
                 sum_mv[1] += mv[1]  # 縦方向の処理
+
+        sum_mv_tuple = tuple(sum_mv)
+        if sum_mv_tuple in kk_imgs:
+            kk_img = kk_imgs[sum_mv_tuple]
+
         kk_rct.move_ip(sum_mv)
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])  # 動きをなかったことにする
